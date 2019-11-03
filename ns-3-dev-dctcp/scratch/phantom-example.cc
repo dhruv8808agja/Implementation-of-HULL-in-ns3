@@ -35,18 +35,18 @@ using namespace ns3;
 
 int main (int argc, char *argv[])
 {
-  uint32_t    nLeaf = 10;
-  uint32_t    maxPackets = 100;
+  uint32_t    nLeaf = 2;
+  uint32_t    maxPackets = 15;
   bool        modeBytes  = false;
   uint32_t    queueDiscLimitPackets = 1000;
   double      minTh = 5;
   double      maxTh = 15;
-  uint32_t    pktSize = 512;
-  std::string appDataRate = "10Mbps";
+  uint32_t    pktSize = 1200;
+  std::string appDataRate = "500Mbps";
   std::string queueDiscType = "RED";
   uint16_t port = 5001;
-  std::string bottleNeckLinkBw = "1Mbps";
-  std::string bottleNeckLinkDelay = "50ms";
+  std::string bottleNeckLinkBw = "1000Mbps";
+  std::string bottleNeckLinkDelay = "6us";
 
   LogComponentEnable ("PhantomQueueDisc", LOG_LEVEL_INFO);
 
@@ -75,7 +75,7 @@ int main (int argc, char *argv[])
   Config::SetDefault ("ns3::QueueBase::MaxSize",
                       QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, maxPackets)));
 
-  if (!modeBytes)
+  if (modeBytes)
     {
       Config::SetDefault ("ns3::PhantomQueueDisc::MaxSize",
                           QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, queueDiscLimitPackets)));
@@ -88,6 +88,12 @@ int main (int argc, char *argv[])
       maxTh *= pktSize;
     }
 
+//Setting TCPDctcp
+  TypeId tcpTid;
+  NS_ABORT_MSG_UNLESS (TypeId::LookupByNameFailSafe ("ns3::TcpDctcp", &tcpTid), "TypeId " << "ns3::TcpDctcp" << " not found");
+  Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpDctcp"));
+//Setting TCPDctcp over  
+  
   Config::SetDefault ("ns3::PhantomQueueDisc::MinTh", DoubleValue (minTh));
   Config::SetDefault ("ns3::PhantomQueueDisc::MaxTh", DoubleValue (maxTh));
   Config::SetDefault ("ns3::PhantomQueueDisc::LinkBandwidth", StringValue (bottleNeckLinkBw));
@@ -107,7 +113,7 @@ int main (int argc, char *argv[])
 
   PointToPointHelper pointToPointLeaf;
   pointToPointLeaf.SetDeviceAttribute    ("DataRate", StringValue ("1000Mbps"));
-  pointToPointLeaf.SetChannelAttribute   ("Delay", StringValue ("1ms"));
+  pointToPointLeaf.SetChannelAttribute   ("Delay", StringValue ("6us"));
 
   PointToPointDumbbellHelper d (nLeaf, pointToPointLeaf,
                                 nLeaf, pointToPointLeaf,
@@ -149,7 +155,7 @@ int main (int argc, char *argv[])
       sinkApps.Add (packetSinkHelper.Install (d.GetLeft (i)));
     }
   sinkApps.Start (Seconds (0.0));
-  sinkApps.Stop (Seconds (30.0));
+  sinkApps.Stop (Seconds (10.0));
 
   ApplicationContainer clientApps;
   for (uint32_t i = 0; i < d.RightCount (); ++i)
@@ -160,7 +166,7 @@ int main (int argc, char *argv[])
       clientApps.Add (clientHelper.Install (d.GetRight (i)));
     }
   clientApps.Start (Seconds (1.0)); // Start 1 second after sink
-  clientApps.Stop (Seconds (15.0)); // Stop before the sink
+  clientApps.Stop (Seconds (8.0)); // Stop before the sink
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
