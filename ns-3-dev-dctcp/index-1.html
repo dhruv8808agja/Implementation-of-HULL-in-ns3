@@ -1,0 +1,101 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Unknown </title></head><body>
+<h1 id="the-network-simulator-version-3">The Network Simulator, Version 3</h1>
+<h2 id="table-of-contents">Table of Contents:</h2>
+<p>1) <a href="#an-open-source-project">An overview</a>
+2) <a href="#building-ns-3">Building ns-3</a>
+3) <a href="#running-ns3">Running ns-3</a>
+4) <a href="#getting-access-to-the-ns-3-documentation">Getting access to the ns-3 documentation</a>
+5) <a href="#working-with-the-development-version-of-ns-3">Working with the development version of ns-3</a></p>
+<p>Note:  Much more substantial information about ns-3 can be found at
+http://www.nsnam.org</p>
+<h2 id="an-open-source-project">An Open Source project</h2>
+<p>ns-3 is a free open source project aiming to build a discrete-event
+network simulator targeted for simulation research and education. <br />
+This is a collaborative project; we hope that
+the missing pieces of the models we have not yet implemented
+will be contributed by the community in an open collaboration
+process.</p>
+<p>The process of contributing to the ns-3 project varies with
+the people involved, the amount of time they can invest
+and the type of model they want to work on, but the current
+process that the project tries to follow is described here:
+http://www.nsnam.org/developers/contributing-code/</p>
+<p>This README excerpts some details from a more extensive
+tutorial that is maintained at:
+http://www.nsnam.org/documentation/latest/</p>
+<h2 id="building-ns-3">Building ns-3</h2>
+<p>The code for the framework and the default models provided
+by ns-3 is built as a set of libraries. User simulations
+are expected to be written as simple programs that make
+use of these ns-3 libraries.</p>
+<p>To build the set of default libraries and the example
+programs included in this package, you need to use the
+tool 'waf'. Detailed information on how to use waf is
+included in the file doc/build.txt</p>
+<p>However, the real quick and dirty way to get started is to
+type the command
+<code>shell
+./waf configure --enable-examples</code></p>
+<p>followed by</p>
+<p><code>shell
+./waf</code></p>
+<p>in the directory which contains this README file. The files
+built will be copied in the build/ directory.</p>
+<p>The current codebase is expected to build and run on the
+set of platforms listed in the <a href="RELEASE_NOTES">release notes</a>
+file.</p>
+<p>Other platforms may or may not work: we welcome patches to
+improve the portability of the code to these other platforms.</p>
+<h2 id="running-ns-3">Running ns-3</h2>
+<p>On recent Linux systems, once you have built ns-3 (with examples
+enabled), it should be easy to run the sample programs with the
+following command, such as:</p>
+<p><code>shell
+./waf --run simple-global-routing</code></p>
+<p>That program should generate a <code>simple-global-routing.tr</code> text
+trace file and a set of <code>simple-global-routing-xx-xx.pcap</code> binary
+pcap trace files, which can be read by <code>tcpdump -tt -r filename.pcap</code>
+The program source can be found in the examples/routing directory.</p>
+<h2 id="getting-access-to-the-ns-3-documentation">Getting access to the ns-3 documentation</h2>
+<p>Once you have verified that your build of ns-3 works by running
+the simple-point-to-point example as outlined in 3) above, it is
+quite likely that you will want to get started on reading
+some ns-3 documentation.</p>
+<p>All of that documentation should always be available from
+the ns-3 website: http:://www.nsnam.org/documentation/.</p>
+<p>This documentation includes:</p>
+<ul>
+<li>
+<p>a tutorial</p>
+</li>
+<li>
+<p>a reference manual</p>
+</li>
+<li>
+<p>models in the ns-3 model library</p>
+</li>
+<li>
+<p>a wiki for user-contributed tips: http://www.nsnam.org/wiki/</p>
+</li>
+<li>
+<p>API documentation generated using doxygen: this is
+    a reference manual, most likely not very well suited
+    as introductory text:
+    http://www.nsnam.org/doxygen/index.html</p>
+</li>
+</ul>
+<h2 id="working-with-the-development-version-of-ns-3">Working with the development version of ns-3</h2>
+<p>If you want to download and use the development version of ns-3, you
+need to use the tool <code>git</code>. A quick and dirty cheat sheet is included
+in the manual, but reading through the git
+tutorials found in the Internet is usually a good idea if you are not
+familiar with it.</p>
+<p>If you have successfully installed git, you can get
+a copy of the development version with the following command:
+<code>shell
+git clone https://gitlab.com/nsnam/ns-3-dev.git</code></p>
+<p>However, we recommend to follow the Gitlab guidelines for starters,
+that includes creating a Gitlab account, forking the ns-3-dev project
+under the new account's name, and then cloning the forked repository.
+You can find more information in the manual [link].</p>
+</body></html>
