@@ -1,4 +1,4 @@
-// /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
+/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
  * Copyright © 2011 Marcos Talau
  *
@@ -77,107 +77,12 @@ TypeId PhantomQueueDisc::GetTypeId (void)
     .SetParent<QueueDisc> ()
     .SetGroupName("TrafficControl")
     .AddConstructor<PhantomQueueDisc> ()
-    .AddAttribute ("MeanPktSize",
-                   "Average of packet size",
-                   UintegerValue (500),
-                   MakeUintegerAccessor (&PhantomQueueDisc::m_meanPktSize),
-                   MakeUintegerChecker<uint32_t> ())
-    .AddAttribute ("IdlePktSize",
-                   "Average packet size used during idle times. Used when m_cautions = 3",
-                   UintegerValue (0),
-                   MakeUintegerAccessor (&PhantomQueueDisc::m_idlePktSize),
-                   MakeUintegerChecker<uint32_t> ())
-    .AddAttribute ("Wait",
-                   "True for waiting between dropped packets",
-                   BooleanValue (true),
-                   MakeBooleanAccessor (&PhantomQueueDisc::m_isWait),
-                   MakeBooleanChecker ())
-    .AddAttribute ("Gentle",
-                   "True to increases dropping probability slowly when average queue exceeds maxthresh",
-                   BooleanValue (true),
-                   MakeBooleanAccessor (&PhantomQueueDisc::m_isGentle),
-                   MakeBooleanChecker ())
-    .AddAttribute ("ARED",
-                   "True to enable ARED",
-                   BooleanValue (false),
-                   MakeBooleanAccessor (&PhantomQueueDisc::m_isARED),
-                   MakeBooleanChecker ())
-    .AddAttribute ("AdaptMaxP",
-                   "True to adapt m_curMaxP",
-                   BooleanValue (false),
-                   MakeBooleanAccessor (&PhantomQueueDisc::m_isAdaptMaxP),
-                   MakeBooleanChecker ())
-    .AddAttribute ("FengAdaptive",
-                   "True to enable Feng's Adaptive RED",
-                   BooleanValue (false),
-                   MakeBooleanAccessor (&PhantomQueueDisc::m_isFengAdaptive),
-                   MakeBooleanChecker ())
-    .AddAttribute ("NLRED",
-                   "True to enable Nonlinear RED",
-                   BooleanValue (false),
-                   MakeBooleanAccessor (&PhantomQueueDisc::m_isNonlinear),
-                   MakeBooleanChecker ())
-    .AddAttribute ("MinTh",
-                   "Minimum average length threshold in packets/bytes",
-                   DoubleValue (5),
-                   MakeDoubleAccessor (&PhantomQueueDisc::m_minTh),
-                   MakeDoubleChecker<double> ())
-    .AddAttribute ("MaxTh",
-                   "Maximum average length threshold in packets/bytes",
-                   DoubleValue (15),
-                   MakeDoubleAccessor (&PhantomQueueDisc::m_maxTh),
-                   MakeDoubleChecker<double> ())
     .AddAttribute ("MaxSize",
                    "The maximum number of packets accepted by this queue disc",
                    QueueSizeValue (QueueSize ("25p")),
                    MakeQueueSizeAccessor (&QueueDisc::SetMaxSize,
                                           &QueueDisc::GetMaxSize),
                    MakeQueueSizeChecker ())
-    .AddAttribute ("QW",
-                   "Queue weight related to the exponential weighted moving average (EWMA)",
-                   DoubleValue (0.002),
-                   MakeDoubleAccessor (&PhantomQueueDisc::m_qW),
-                   MakeDoubleChecker <double> ())
-    .AddAttribute ("LInterm",
-                   "The maximum probability of dropping a packet",
-                   DoubleValue (50),
-                   MakeDoubleAccessor (&PhantomQueueDisc::m_lInterm),
-                   MakeDoubleChecker <double> ())
-    .AddAttribute ("TargetDelay",
-                   "Target average queuing delay in ARED",
-                   TimeValue (Seconds (0.005)),
-                   MakeTimeAccessor (&PhantomQueueDisc::m_targetDelay),
-                   MakeTimeChecker ())
-    .AddAttribute ("Interval",
-                   "Time interval to update m_curMaxP",
-                   TimeValue (Seconds (0.5)),
-                   MakeTimeAccessor (&PhantomQueueDisc::m_interval),
-                   MakeTimeChecker ())
-    .AddAttribute ("Top",
-                   "Upper bound for m_curMaxP in ARED",
-                   DoubleValue (0.5),
-                   MakeDoubleAccessor (&PhantomQueueDisc::m_top),
-                   MakeDoubleChecker <double> (0, 1))
-    .AddAttribute ("Bottom",
-                   "Lower bound for m_curMaxP in ARED",
-                   DoubleValue (0.0),
-                   MakeDoubleAccessor (&PhantomQueueDisc::m_bottom),
-                   MakeDoubleChecker <double> (0, 1))
-    .AddAttribute ("LastSet",
-                   "Store the last time m_curMaxP was updated",
-                   TimeValue (Seconds (0.0)),
-                   MakeTimeAccessor (&PhantomQueueDisc::m_lastSet),
-                   MakeTimeChecker ())
-    .AddAttribute ("Rtt",
-                   "Round Trip Time to be considered while automatically setting m_bottom",
-                   TimeValue (Seconds (0.1)),
-                   MakeTimeAccessor (&PhantomQueueDisc::m_rtt),
-                   MakeTimeChecker ())
-    .AddAttribute ("Ns1Compat",
-                   "NS-1 compatibility",
-                   BooleanValue (false),
-                   MakeBooleanAccessor (&PhantomQueueDisc::m_isNs1Compat),
-                   MakeBooleanChecker ())
     .AddAttribute ("LinkBandwidth", 
                    "The RED link bandwidth",
                    DataRateValue (DataRate ("1.5Mbps")),
@@ -188,17 +93,12 @@ TypeId PhantomQueueDisc::GetTypeId (void)
                    TimeValue (MilliSeconds (20)),
                    MakeTimeAccessor (&PhantomQueueDisc::m_linkDelay),
                    MakeTimeChecker ())
-    .AddAttribute ("UseEcn",
-                   "True to use ECN (packets are marked instead of being dropped)",
-                   BooleanValue (false),
-                   MakeBooleanAccessor (&PhantomQueueDisc::m_useEcn),
-                   MakeBooleanChecker ())
-    .AddAttribute ("UseHardDrop",
-                   "True to always drop packets above max threshold",
-                   BooleanValue (true),
-                   MakeBooleanAccessor (&PhantomQueueDisc::m_useHardDrop),
-                   MakeBooleanChecker ())
-  ;
+    .AddAttribute("DrainDelay",
+                  "Drain Rate of Virtual Queue",
+                  DoubleValue(0.95),
+                  MakeDoubleAccessor (&PhantomQueueDisc::m_drain_rate_fraction),
+                   MakeDoubleChecker <double> ())
+      ;
 
   return tid;
 }
@@ -207,7 +107,6 @@ PhantomQueueDisc::PhantomQueueDisc () :
   QueueDisc (QueueDiscSizePolicy::SINGLE_INTERNAL_QUEUE)
 {
   NS_LOG_FUNCTION (this);
-  m_uv = CreateObject<UniformRandomVariable> ();
 }
 
 PhantomQueueDisc::~PhantomQueueDisc ()
@@ -219,7 +118,6 @@ void
 PhantomQueueDisc::DoDispose (void)
 {
   NS_LOG_FUNCTION (this);
-  m_uv = 0;
   QueueDisc::DoDispose ();
 }
 
@@ -266,117 +164,24 @@ PhantomQueueDisc::InitializeParams (void)
   NS_LOG_FUNCTION (this);
   NS_LOG_INFO ("Initializing RED params.");
 
-  m_cautious = 0;
-  m_ptc = m_linkBandwidth.GetBitRate () / (8.0 * m_meanPktSize);
+  
 
-  //   DataRate m_drain_rate;
-  // double m_marking_threshold;
-  // double m_vq;
-
-  // Time m_lastSet;  
-
-  m_drain_rate=m_linkBandwidth.GetBitRate()*(0.95);
+  m_drain_rate=m_linkBandwidth.GetBitRate()*(m_drain_rate_fraction);
   m_marking_threshold=6000;
   m_vq=0;
   m_lastSet=Simulator::Now ();
 
-  if (m_isARED)
-    {
-      // Set m_minTh, m_maxTh and m_qW to zero for automatic setting
-      m_minTh = 0;
-      m_maxTh = 0;
-      m_qW = 0;
+ 
+   m_idle = 1;
 
-      // Turn on m_isAdaptMaxP to adapt m_curMaxP
-      m_isAdaptMaxP = true;
-    }
-
-
-
-  if (m_minTh == 0 && m_maxTh == 0)
-    {
-      m_minTh = 5.0;
-
-      // set m_minTh to max(m_minTh, targetqueue/2.0) [Ref: http://www.icir.org/floyd/papers/adaptiveRed.pdf]
-      double targetqueue = m_targetDelay.GetSeconds() * m_ptc;
-
-      if (m_minTh < targetqueue / 2.0 )
-        {
-          m_minTh = targetqueue / 2.0;
-        }
-      if (GetMaxSize ().GetUnit () == QueueSizeUnit::BYTES)
-        {
-          m_minTh = m_minTh * m_meanPktSize;
-        }
-
-      // set m_maxTh to three times m_minTh [Ref: http://www.icir.org/floyd/papers/adaptiveRed.pdf]
-      m_maxTh = 3 * m_minTh;
-    }
-
-  NS_ASSERT (m_minTh <= m_maxTh);
-
-  m_qAvg = 0.0;
-  m_count = 0;
-  m_countBytes = 0;
-  m_old = 0;
-  m_idle = 1;
-
-  double th_diff = (m_maxTh - m_minTh);
-  if (th_diff == 0)
-    {
-      th_diff = 1.0; 
-    }
-  m_vA = 1.0 / th_diff;
-  m_curMaxP = 1.0 / m_lInterm;
-  m_vB = -m_minTh / th_diff;
-
-  if (m_isGentle)
-    {
-      m_vC = (1.0 - m_curMaxP) / m_maxTh;
-      m_vD = 2.0 * m_curMaxP - 1.0;
-    }
   m_idleTime = NanoSeconds (0);
 
 
-  if (m_qW == 0.0)
-    {
-      m_qW = 1.0 - std::exp (-1.0 / m_ptc);
-    }
-  else if (m_qW == -1.0)
-    {
-      double rtt = 3.0 * (m_linkDelay.GetSeconds () + 1.0 / m_ptc);
-
-      if (rtt < 0.1)
-        {
-          rtt = 0.1;
-        }
-      m_qW = 1.0 - std::exp (-1.0 / (10 * rtt * m_ptc));
-    }
-  else if (m_qW == -2.0)
-    {
-      m_qW = 1.0 - std::exp (-10.0 / m_ptc);
-    }
-
-  if (m_bottom == 0)
-    {
-      m_bottom = 0.01;
-      // Set bottom to at most 1/W, where W is the delay-bandwidth
-      // product in packets for a connection.
-      // So W = m_linkBandwidth.GetBitRate () / (8.0 * m_meanPktSize * m_rtt.GetSeconds())
-      double bottom1 = (8.0 * m_meanPktSize * m_rtt.GetSeconds()) / m_linkBandwidth.GetBitRate();
-      if (bottom1 < m_bottom)
-        {
-          m_bottom = bottom1;
-        }
-    }
-
-  NS_LOG_DEBUG ("\tm_delay " << m_linkDelay.GetSeconds () << "; m_isWait " 
-                             << m_isWait << "; m_qW " << m_qW << "; m_ptc " << m_ptc
-                             << "; m_minTh " << m_minTh << "; m_maxTh " << m_maxTh
-                             << "; m_isGentle " << m_isGentle << "; th_diff " << th_diff
-                             << "; lInterm " << m_lInterm << "; va " << m_vA <<  "; cur_max_p "
-                             << m_curMaxP << "; v_b " << m_vB <<  "; m_vC "
-                             << m_vC << "; m_vD " <<  m_vD);
+ 
+  NS_LOG_DEBUG ("\tm_delay " << m_linkDelay.GetSeconds () 
+                             << "; vq " << m_vq
+                             <<"; marking_thresh "<<m_marking_threshold
+                             <<"; drain_rate"<< m_drain_rate<<std::endl);
 }
 
 
@@ -451,11 +256,6 @@ PhantomQueueDisc::CheckConfig (void)
     {
       NS_LOG_ERROR ("PhantomQueueDisc needs 1 internal queue");
       return false;
-    }
-
-  if ((m_isARED || m_isAdaptMaxP) && m_isFengAdaptive)
-    {
-      NS_LOG_ERROR ("m_isAdaptMaxP and m_isFengAdaptive cannot be simultaneously true");
     }
 
   return true;

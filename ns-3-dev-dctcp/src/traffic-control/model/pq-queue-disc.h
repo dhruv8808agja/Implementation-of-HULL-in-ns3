@@ -149,64 +149,19 @@ private:
   virtual void InitializeParams (void);
 
 
-  // ** Variables supplied by user
-  uint32_t m_meanPktSize;   //!< Avg pkt size
-  uint32_t m_idlePktSize;   //!< Avg pkt size used during idle times
-  bool m_isWait;            //!< True for waiting between dropped packets
-  bool m_isGentle;          //!< True to increase dropping prob. slowly when m_qAvg exceeds m_maxTh
-  bool m_isARED;            //!< True to enable Adaptive RED
-  bool m_isAdaptMaxP;       //!< True to adapt m_curMaxP
-  double m_minTh;           //!< Minimum threshold for m_qAvg (bytes or packets)
-  double m_maxTh;           //!< Maximum threshold for m_qAvg (bytes or packets), should be >= 2 * m_minTh
-  double m_qW;              //!< Queue weight given to cur queue size sample
-  double m_lInterm;         //!< The max probability of dropping a packet
-  Time m_targetDelay;       //!< Target average queuing delay in ARED
-  Time m_interval;          //!< Time interval to update m_curMaxP
-  double m_top;             //!< Upper bound for m_curMaxP in ARED
-  double m_bottom;          //!< Lower bound for m_curMaxP in ARED
-  double m_alpha;           //!< Increment parameter for m_curMaxP in ARED
-  double m_beta;            //!< Decrement parameter for m_curMaxP in ARED
-  Time m_rtt;               //!< Rtt to be considered while automatically setting m_bottom in ARED
-  bool m_isFengAdaptive;    //!< True to enable Feng's Adaptive RED
-  bool m_isNonlinear;       //!< True to enable Nonlinear RED
-  double m_b;               //!< Increment parameter for m_curMaxP in Feng's Adaptive RED
-  double m_a;               //!< Decrement parameter for m_curMaxP in Feng's Adaptive RED
-  bool m_isNs1Compat;       //!< Ns-1 compatibility
-  DataRate m_linkBandwidth; //!< Link bandwidth
-  Time m_linkDelay;         //!< Link delay
-  bool m_useEcn;            //!< True if ECN is used (packets are marked instead of being dropped)
-  bool m_useHardDrop;       //!< True if packets are always dropped above max threshold
-
+ 
   // ** Phantom Queue
+  double m_drain_rate_fraction;
   DataRate m_drain_rate;
   double m_marking_threshold;
   double m_vq;
   Time m_lastSet;           //!< Last time m_curMaxP was updated
+  DataRate m_linkBandwidth; //!< Link bandwidth
+  Time m_linkDelay;         //!< Link delay
 
-  // ** Variables maintained by RED
-  double m_vA;              //!< 1.0 / (m_maxTh - m_minTh)
-  double m_vB;              //!< -m_minTh / (m_maxTh - m_minTh)
-  double m_vC;              //!< (1.0 - m_curMaxP) / m_maxTh - used in "gentle" mode
-  double m_vD;              //!< 2.0 * m_curMaxP - 1.0 - used in "gentle" mode
-  double m_curMaxP;         //!< Current max_p
+   uint32_t m_idle;          //!< 0/1 idle status
 
-  double m_vProb;           //!< Prob. of packet drop
-  uint32_t m_countBytes;    //!< Number of bytes since last drop
-  uint32_t m_old;           //!< 0 when average queue first exceeds threshold
-  uint32_t m_idle;          //!< 0/1 idle status
-  double m_ptc;             //!< packet time constant in packets/second
-  double m_qAvg;            //!< Average queue length
-  uint32_t m_count;         //!< Number of packets since last random number generation
-  /**
-   * 0 for default RED
-   * 1 experimental (see red-queue-disc.cc)
-   * 2 experimental (see red-queue-disc.cc)
-   * 3 use Idle packet size in the ptc
-   */
-  uint32_t m_cautious;
-  Time m_idleTime;          //!< Start of current idle period
-
-  Ptr<UniformRandomVariable> m_uv;  //!< rng stream
+   Time m_idleTime;          //!< Start of current idle period
 };
 
 }; // namespace ns3

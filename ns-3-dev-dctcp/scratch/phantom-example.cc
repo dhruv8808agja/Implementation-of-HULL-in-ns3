@@ -35,7 +35,7 @@ using namespace ns3;
 
 int main (int argc, char *argv[])
 {
-  uint32_t    nLeaf = 3;
+  uint32_t    nLeaf = 6;
   uint32_t    maxPackets = 15;
   bool        modeBytes  = false;
   uint32_t    queueDiscLimitPackets = 1000;
