@@ -35,12 +35,12 @@ using namespace ns3;
 
 int main (int argc, char *argv[])
 {
-  uint32_t    nLeaf = 2;
+  uint32_t    nLeaf = 3;
   uint32_t    maxPackets = 15;
   bool        modeBytes  = false;
   uint32_t    queueDiscLimitPackets = 1000;
-  double      minTh = 5;
-  double      maxTh = 15;
+  // double      minTh = 5;
+  // double      maxTh = 15;
   uint32_t    pktSize = 1200;
   std::string appDataRate = "500Mbps";
   std::string queueDiscType = "RED";
@@ -59,8 +59,8 @@ int main (int argc, char *argv[])
   cmd.AddValue ("appDataRate", "Set OnOff App DataRate", appDataRate);
   cmd.AddValue ("modeBytes", "Set Queue disc mode to Packets <false> or bytes <true>", modeBytes);
   
-  cmd.AddValue ("redMinTh", "RED queue minimum threshold", minTh);
-  cmd.AddValue ("redMaxTh", "RED queue maximum threshold", maxTh);
+  // cmd.AddValue ("redMinTh", "RED queue minimum threshold", minTh);
+  // cmd.AddValue ("redMaxTh", "RED queue maximum threshold", maxTh);
   cmd.Parse (argc,argv);
 
   if ((queueDiscType != "RED") && (queueDiscType != "FengAdaptive"))
@@ -84,8 +84,8 @@ int main (int argc, char *argv[])
     {
       Config::SetDefault ("ns3::PhantomQueueDisc::MaxSize",
                           QueueSizeValue (QueueSize (QueueSizeUnit::BYTES, queueDiscLimitPackets * pktSize)));
-      minTh *= pktSize;
-      maxTh *= pktSize;
+      // minTh *= pktSize;
+      // maxTh *= pktSize;
     }
 
 //Setting TCPDctcp
@@ -94,17 +94,17 @@ int main (int argc, char *argv[])
   Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpDctcp"));
 //Setting TCPDctcp over  
   
-  Config::SetDefault ("ns3::PhantomQueueDisc::MinTh", DoubleValue (minTh));
-  Config::SetDefault ("ns3::PhantomQueueDisc::MaxTh", DoubleValue (maxTh));
+  // Config::SetDefault ("ns3::PhantomQueueDisc::MinTh", DoubleValue (minTh));
+  // Config::SetDefault ("ns3::PhantomQueueDisc::MaxTh", DoubleValue (maxTh));
   Config::SetDefault ("ns3::PhantomQueueDisc::LinkBandwidth", StringValue (bottleNeckLinkBw));
   Config::SetDefault ("ns3::PhantomQueueDisc::LinkDelay", StringValue (bottleNeckLinkDelay));
-  Config::SetDefault ("ns3::PhantomQueueDisc::MeanPktSize", UintegerValue (pktSize));
+  //Config::SetDefault ("ns3::PhantomQueueDisc::MeanPktSize", UintegerValue (pktSize));
 
-  if (queueDiscType == "FengAdaptive")
-    {
-      // Turn on Feng's Adaptive RED
-      Config::SetDefault ("ns3::PhantomQueueDisc::FengAdaptive", BooleanValue (true));
-    }
+  // if (queueDiscType == "FengAdaptive")
+  //   {
+  //     // Turn on Feng's Adaptive RED
+  //     Config::SetDefault ("ns3::PhantomQueueDisc::FengAdaptive", BooleanValue (true));
+  //   }
 
   // Create the point-to-point link helpers
   PointToPointHelper bottleNeckLink;
@@ -155,7 +155,7 @@ int main (int argc, char *argv[])
       sinkApps.Add (packetSinkHelper.Install (d.GetLeft (i)));
     }
   sinkApps.Start (Seconds (0.0));
-  sinkApps.Stop (Seconds (10.0));
+  sinkApps.Stop (Seconds (3.0));
 
   ApplicationContainer clientApps;
   for (uint32_t i = 0; i < d.RightCount (); ++i)
@@ -166,7 +166,7 @@ int main (int argc, char *argv[])
       clientApps.Add (clientHelper.Install (d.GetRight (i)));
     }
   clientApps.Start (Seconds (1.0)); // Start 1 second after sink
-  clientApps.Stop (Seconds (8.0)); // Stop before the sink
+  clientApps.Stop (Seconds (2.0)); // Stop before the sink
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
