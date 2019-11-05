@@ -35,7 +35,7 @@ using namespace ns3;
 
 int main (int argc, char *argv[])
 {
-  uint32_t    nLeaf = 6;
+  uint32_t    nLeaf = 2;
   uint32_t    maxPackets = 15;
   bool        modeBytes  = false;
   uint32_t    queueDiscLimitPackets = 1000;
@@ -63,11 +63,11 @@ int main (int argc, char *argv[])
   // cmd.AddValue ("redMaxTh", "RED queue maximum threshold", maxTh);
   cmd.Parse (argc,argv);
 
-  if ((queueDiscType != "RED") && (queueDiscType != "FengAdaptive"))
-    {
-      std::cout << "Invalid queue disc type: Use --queueDiscType=RED or --queueDiscType=FengAdaptive" << std::endl;
-      exit (1);
-    }
+  // if ((queueDiscType != "RED") && (queueDiscType != "FengAdaptive"))
+  //   {
+  //     std::cout << "Invalid queue disc type: Use --queueDiscType=RED or --queueDiscType=FengAdaptive" << std::endl;
+  //     exit (1);
+  //   }
 
   Config::SetDefault ("ns3::OnOffApplication::PacketSize", UintegerValue (pktSize));
   Config::SetDefault ("ns3::OnOffApplication::DataRate", StringValue (appDataRate));
@@ -169,6 +169,15 @@ int main (int argc, char *argv[])
   clientApps.Stop (Seconds (2.0)); // Stop before the sink
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+
+
+  AsciiTraceHelper ascii;
+      pointToPointLeaf.EnableAsciiAll (ascii.CreateFileStream ("./PhantomQ/leafTraces_1_node/leafNodeTraces.tr"));
+      pointToPointLeaf.EnablePcapAll ("PhantomQ/leafTraces_1_node/leafNodeTr.tr", false);
+
+      bottleNeckLink.EnableAsciiAll (ascii.CreateFileStream ("./PhantomQ/bottleneckTraces_1_node/bottleneckNodeTraces.tr"));
+      bottleNeckLink.EnablePcapAll ("PhantomQ/bottleneckTraces_1_node/bottlenectNodeTr.tr", false);
+
 
   std::cout << "Running the simulation" << std::endl;
   Simulator::Run ();
