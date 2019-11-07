@@ -158,10 +158,8 @@ private:
   Time m_lastSet;           //!< Last time m_curMaxP was updated
   DataRate m_linkBandwidth; //!< Link bandwidth
   Time m_linkDelay;         //!< Link delay
-
-   uint32_t m_idle;          //!< 0/1 idle status
-
-   Time m_idleTime;          //!< Start of current idle period
+  uint32_t m_idle;          //!< 0/1 idle status
+  Time m_idleTime;          //!< Start of current idle period
 };
 
 }; // namespace ns3

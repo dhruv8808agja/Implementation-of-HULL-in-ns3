@@ -84,22 +84,26 @@ TypeId PhantomQueueDisc::GetTypeId (void)
                                           &QueueDisc::GetMaxSize),
                    MakeQueueSizeChecker ())
     .AddAttribute ("LinkBandwidth", 
-                   "The RED link bandwidth",
+                   "The PQ link bandwidth",
                    DataRateValue (DataRate ("1.5Mbps")),
                    MakeDataRateAccessor (&PhantomQueueDisc::m_linkBandwidth),
                    MakeDataRateChecker ())
     .AddAttribute ("LinkDelay", 
-                   "The RED link delay",
+                   "The PQ link delay",
                    TimeValue (MilliSeconds (20)),
                    MakeTimeAccessor (&PhantomQueueDisc::m_linkDelay),
                    MakeTimeChecker ())
-    .AddAttribute("DrainDelay",
-                  "Drain Rate of Virtual Queue",
-                  DoubleValue(0.95),
-                  MakeDoubleAccessor (&PhantomQueueDisc::m_drain_rate_fraction),
-                   MakeDoubleChecker <double> ())
+    .AddAttribute ("DrainRateFraction",
+                   "fraction of total bandwidth set as drain rate",
+                   DoubleValue (0.95),
+                   MakeDoubleAccessor (&PhantomQueueDisc::m_drain_rate_fraction),
+                   MakeDoubleChecker<double> ())
+    .AddAttribute ("MarkingthreShold",
+                   "Marking threshold of phantom Queue",
+                   DoubleValue (6000),
+                   MakeDoubleAccessor (&PhantomQueueDisc::m_marking_threshold),
+                   MakeDoubleChecker<double> ())
       ;
-
   return tid;
 }
 
@@ -128,6 +132,7 @@ PhantomQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 {
   NS_LOG_FUNCTION (this << item);
   uint32_t nQueued = GetInternalQueue (0)->GetCurrentSize ().GetValue ();
+
   if(item->GetSize()+nQueued>GetInternalQueue (0)->GetMaxSize().GetValue())
   {
     DropBeforeEnqueue (item, FORCED_DROP);
@@ -135,14 +140,21 @@ PhantomQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
   }
 
   Time now=Simulator::Now();
+
   m_vq=m_vq-(now-m_lastSet).GetSeconds()*m_drain_rate.GetBitRate()/8;
+
   if(m_vq<0)
+  {
     m_vq=0;
+  }
+
   m_vq+=item->GetSize();
+
   if(m_vq>m_marking_threshold)
   {
     Mark (item, FORCED_MARK);
   }
+
   m_lastSet=now;
 
   bool retval = GetInternalQueue (0)->Enqueue (item);
@@ -152,32 +164,18 @@ PhantomQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
   return retval;
 }
 
-/*
- * Note: if the link bandwidth changes in the course of the
- * simulation, the bandwidth-dependent RED parameters do not change.
- * This should be fixed, but it would require some extra parameters,
- * and didn't seem worth the trouble...
- */
+
 void
 PhantomQueueDisc::InitializeParams (void)
 {
   NS_LOG_FUNCTION (this);
-  NS_LOG_INFO ("Initializing RED params.");
-
-  
-
+  NS_LOG_INFO ("Initializing PQ params.");
   m_drain_rate=m_linkBandwidth.GetBitRate()*(m_drain_rate_fraction);
-  m_marking_threshold=6000;
+  //m_marking_threshold=6000;
   m_vq=0;
   m_lastSet=Simulator::Now ();
-
- 
-   m_idle = 1;
-
+  m_idle = 1;
   m_idleTime = NanoSeconds (0);
-
-
- 
   NS_LOG_DEBUG ("\tm_delay " << m_linkDelay.GetSeconds () 
                              << "; vq " << m_vq
                              <<"; marking_thresh "<<m_marking_threshold
@@ -195,7 +193,6 @@ PhantomQueueDisc::DoDequeue (void)
       NS_LOG_LOGIC ("Queue empty");
       m_idle = 1;
       m_idleTime = Simulator::Now ();
-
       return 0;
     }
   else
@@ -203,10 +200,8 @@ PhantomQueueDisc::DoDequeue (void)
       m_idle = 0;
       Ptr<QueueDiscItem> item = GetInternalQueue (0)->Dequeue ();
       NS_LOG_LOGIC ("Popped " << item);
-
       NS_LOG_LOGIC ("Number packets " << GetInternalQueue (0)->GetNPackets ());
       NS_LOG_LOGIC ("Number bytes " << GetInternalQueue (0)->GetNBytes ());
-
       return item;
     }
 }
@@ -215,6 +210,7 @@ Ptr<const QueueDiscItem>
 PhantomQueueDisc::DoPeek (void)
 {
   NS_LOG_FUNCTION (this);
+
   if (GetInternalQueue (0)->IsEmpty ())
     {
       NS_LOG_LOGIC ("Queue empty");
@@ -222,10 +218,8 @@ PhantomQueueDisc::DoPeek (void)
     }
 
   Ptr<const QueueDiscItem> item = GetInternalQueue (0)->Peek ();
-
   NS_LOG_LOGIC ("Number packets " << GetInternalQueue (0)->GetNPackets ());
   NS_LOG_LOGIC ("Number bytes " << GetInternalQueue (0)->GetNBytes ());
-
   return item;
 }
 
