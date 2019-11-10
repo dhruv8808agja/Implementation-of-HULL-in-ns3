@@ -35,14 +35,14 @@ using namespace ns3;
 
 int main (int argc, char *argv[])
 {
-  uint32_t    nLeaf = 2;
+  uint32_t    nLeaf = 6;
   uint32_t    maxPackets = 15;
   bool        modeBytes  = false;
-  uint32_t    queueDiscLimitPackets = 1000;
+  uint32_t    queueDiscLimitPackets = 25; //1000
   // double      minTh = 5;
   // double      maxTh = 15;
   uint32_t    pktSize = 1200;
-  std::string appDataRate = "500Mbps";
+  std::string appDataRate = "1000Mbps";
   std::string queueDiscType = "RED";
   uint16_t port = 5001;
   std::string bottleNeckLinkBw = "1000Mbps";
@@ -89,22 +89,14 @@ int main (int argc, char *argv[])
     }
 
 //Setting TCPDctcp
-  TypeId tcpTid;
-  NS_ABORT_MSG_UNLESS (TypeId::LookupByNameFailSafe ("ns3::TcpDctcp", &tcpTid), "TypeId " << "ns3::TcpDctcp" << " not found");
-  Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpDctcp"));
+  // TypeId tcpTid;
+  // NS_ABORT_MSG_UNLESS (TypeId::LookupByNameFailSafe ("ns3::TcpDctcp", &tcpTid), "TypeId " << "ns3::TcpDctcp" << " not found");
+  // Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpDctcp"));
 //Setting TCPDctcp over  
-  
-  // Config::SetDefault ("ns3::PhantomQueueDisc::MinTh", DoubleValue (minTh));
-  // Config::SetDefault ("ns3::PhantomQueueDisc::MaxTh", DoubleValue (maxTh));
   Config::SetDefault ("ns3::PhantomQueueDisc::LinkBandwidth", StringValue (bottleNeckLinkBw));
   Config::SetDefault ("ns3::PhantomQueueDisc::LinkDelay", StringValue (bottleNeckLinkDelay));
-  //Config::SetDefault ("ns3::PhantomQueueDisc::MeanPktSize", UintegerValue (pktSize));
-
-  // if (queueDiscType == "FengAdaptive")
-  //   {
-  //     // Turn on Feng's Adaptive RED
-  //     Config::SetDefault ("ns3::PhantomQueueDisc::FengAdaptive", BooleanValue (true));
-  //   }
+  Config::SetDefault ("ns3::PhantomQueueDisc::DrainRateFraction", DoubleValue(0.95));
+  Config::SetDefault ("ns3::PhantomQueueDisc::MarkingthreShold", DoubleValue(6000));
 
   // Create the point-to-point link helpers
   PointToPointHelper bottleNeckLink;
@@ -144,9 +136,11 @@ int main (int argc, char *argv[])
                          Ipv4AddressHelper ("10.3.1.0", "255.255.255.0"));
 
   // Install on/off app on all right side nodes
-  OnOffHelper clientHelper ("ns3::TcpSocketFactory", Address ());
-  clientHelper.SetAttribute ("OnTime", StringValue ("ns3::UniformRandomVariable[Min=0.|Max=1.]"));
-  clientHelper.SetAttribute ("OffTime", StringValue ("ns3::UniformRandomVariable[Min=0.|Max=1.]"));
+  BulkSendHelper clientHelper ("ns3::TcpSocketFactory", Address ());
+    clientHelper.SetAttribute ("MaxBytes", UintegerValue (0));
+
+  //clientHelper.SetAttribute ("OnTime", StringValue ("ns3::UniformRandomVariable[Min=0.|Max=1.]"));
+  //clientHelper.SetAttribute ("OffTime", StringValue ("ns3::UniformRandomVariable[Min=0.|Max=1.]"));
   Address sinkLocalAddress (InetSocketAddress (Ipv4Address::GetAny (), port));
   PacketSinkHelper packetSinkHelper ("ns3::TcpSocketFactory", sinkLocalAddress);
   ApplicationContainer sinkApps;
@@ -155,7 +149,7 @@ int main (int argc, char *argv[])
       sinkApps.Add (packetSinkHelper.Install (d.GetLeft (i)));
     }
   sinkApps.Start (Seconds (0.0));
-  sinkApps.Stop (Seconds (3.0));
+  sinkApps.Stop (Seconds (12.0));
 
   ApplicationContainer clientApps;
   for (uint32_t i = 0; i < d.RightCount (); ++i)
@@ -166,17 +160,17 @@ int main (int argc, char *argv[])
       clientApps.Add (clientHelper.Install (d.GetRight (i)));
     }
   clientApps.Start (Seconds (1.0)); // Start 1 second after sink
-  clientApps.Stop (Seconds (2.0)); // Stop before the sink
+  clientApps.Stop (Seconds (11.0)); // Stop before the sink
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
 
-  AsciiTraceHelper ascii;
-      pointToPointLeaf.EnableAsciiAll (ascii.CreateFileStream ("./PhantomQ/leafTraces_1_node/leafNodeTraces.tr"));
-      pointToPointLeaf.EnablePcapAll ("PhantomQ/leafTraces_1_node/leafNodeTr.tr", false);
+  // AsciiTraceHelper ascii;
+  //     pointToPointLeaf.EnableAsciiAll (ascii.CreateFileStream ("./PhantomQ/leafTraces_1_node/leafNodeTraces.tr"));
+  //     pointToPointLeaf.EnablePcapAll ("PhantomQ/leafTraces_1_node/leafNodeTr.tr", false);
 
-      bottleNeckLink.EnableAsciiAll (ascii.CreateFileStream ("./PhantomQ/bottleneckTraces_1_node/bottleneckNodeTraces.tr"));
-      bottleNeckLink.EnablePcapAll ("PhantomQ/bottleneckTraces_1_node/bottlenectNodeTr.tr", false);
+  //     bottleNeckLink.EnableAsciiAll (ascii.CreateFileStream ("./PhantomQ/bottleneckTraces_1_node/bottleneckNodeTraces.tr"));
+  //     bottleNeckLink.EnablePcapAll ("PhantomQ/bottleneckTraces_1_node/bottlenectNodeTr.tr", false);
 
 
   std::cout << "Running the simulation" << std::endl;
@@ -198,6 +192,8 @@ int main (int argc, char *argv[])
 
   std::cout << "*** Stats from the bottleneck queue disc ***" << std::endl;
   std::cout << st << std::endl;
+  std::cout << "bottleNeckLinkBw : "<<bottleNeckLinkBw<<std::endl;
+  std::cout << "Average Throughput : "<<(st.nTotalSentBytes/(10.0*1024*128))<<" Mbps"<<std::endl;
   std::cout << "Destroying the simulation" << std::endl;
 
   Simulator::Destroy ();
