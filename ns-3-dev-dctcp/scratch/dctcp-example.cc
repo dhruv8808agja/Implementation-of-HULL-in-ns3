@@ -1,0 +1,313 @@
+#include "ns3/core-module.h"
+#include "ns3/network-module.h"
+#include "ns3/internet-module.h"
+#include "ns3/point-to-point-module.h"
+#include "ns3/applications-module.h"
+#include "ns3/traffic-control-module.h"
+
+using namespace ns3;
+
+NS_LOG_COMPONENT_DEFINE ("DctcpExample");
+
+std::stringstream filePlotQueue1;
+std::stringstream filePlotQueue2;
+
+void
+PrintPayload ( Ptr< const Packet > p)
+{
+  std::ofstream fPlotQueue ("throughput.dat", std::ios::out | std::ios::app);
+  fPlotQueue << Simulator::Now ().GetSeconds () << " " << p->GetSize () << std::endl;
+  fPlotQueue.close ();
+}
+
+void
+CheckQueueSize (Ptr<QueueDisc> queue, std::string filePlotQueue)
+{
+  //uint32_t qSize = StaticCast<RedQueueDisc> (queue)->GetQueueSize ();
+  uint32_t qSize=1000;
+  // check queue size every 1/100 of a second
+  Simulator::Schedule (Seconds (0.01), &CheckQueueSize, queue, filePlotQueue);
+
+  std::ofstream fPlotQueue (filePlotQueue.c_str (), std::ios::out | std::ios::app);
+  fPlotQueue << Simulator::Now ().GetSeconds () << " " << qSize << std::endl;
+  fPlotQueue.close ();
+}
+
+int main (int argc, char *argv[])
+{
+
+  LogComponentEnable ("DctcpExample", LOG_LEVEL_INFO);
+
+  std::string pathOut = ".";
+  bool writeForPlot = false;
+  bool writePcap = true;
+
+  CommandLine cmd;
+  cmd.AddValue ("pathOut", "Path to save results from --writeForPlot/--writePcap", pathOut);
+  cmd.AddValue ("writeForPlot", "<0/1> to write results for plot (gnuplot)", writeForPlot);
+  cmd.AddValue ("writePcap", "<0/1> to write results in pcapfile", writePcap);
+  cmd.Parse (argc, argv);
+
+
+
+
+  //Phantom Q
+
+// uint32_t    maxPackets = 15;
+//   bool        modeBytes  = false;
+//   uint32_t    queueDiscLimitPackets = 25; //1000
+//   // double      minTh = 5;
+//   // double      maxTh = 15;
+//   uint32_t    pktSize = 1200;
+//   std::string appDataRate = "100Mbps";
+//   std::string bottleNeckLinkBw = "100Mbps";
+//   std::string bottleNeckLinkDelay = "0.01ms";
+
+
+//   Config::SetDefault ("ns3::OnOffApplication::PacketSize", UintegerValue (pktSize));
+//   Config::SetDefault ("ns3::OnOffApplication::DataRate", StringValue (appDataRate));
+
+//   Config::SetDefault ("ns3::QueueBase::MaxSize",
+//                       QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, maxPackets)));
+
+//   if (!modeBytes)
+//     {
+//       Config::SetDefault ("ns3::PhantomQueueDisc::MaxSize",
+//                           QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, queueDiscLimitPackets)));
+//     }
+//   else
+//     {
+//       Config::SetDefault ("ns3::PhantomQueueDisc::MaxSize",
+//                           QueueSizeValue (QueueSize (QueueSizeUnit::BYTES, queueDiscLimitPackets * pktSize)));
+//       // minTh *= pktSize;
+//       // maxTh *= pktSize;
+//     }
+
+// //Setting TCPDctcp
+// //   TypeId tcpTid;
+// //   NS_ABORT_MSG_UNLESS (TypeId::LookupByNameFailSafe ("ns3::TcpDctcp", &tcpTid), "TypeId " << "ns3::TcpDctcp" << " not found");
+// //   Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpDctcp"));
+// // //Setting TCPDctcp over  
+//   Config::SetDefault ("ns3::PhantomQueueDisc::LinkBandwidth", StringValue (bottleNeckLinkBw));
+//   Config::SetDefault ("ns3::PhantomQueueDisc::LinkDelay", StringValue (bottleNeckLinkDelay));
+//   Config::SetDefault ("ns3::PhantomQueueDisc::DrainRateFraction", DoubleValue(0.90));
+//   Config::SetDefault ("ns3::PhantomQueueDisc::MarkingthreShold", DoubleValue(6000));
+
+  //Phantom Q over
+
+  double global_start_time = 0.0;
+  double global_stop_time = 18;
+  double sink_start_time = global_start_time;
+  double sink_stop_time = global_stop_time + 3.0;
+  double client_start_time = sink_start_time + 0.2;
+  double client_stop_time = global_stop_time - 2.0;
+
+  NodeContainer S1, S2, S3, R1, R2, T1, T2;
+  T1.Create (2);
+  T2.Create (1);
+  T2.Add (T1.Get (1));
+  R1.Create (1);
+  R1.Add (T2.Get (0));
+  S1.Create (10);
+  S1.Add (T1.Get (0));
+  S2.Create (20);
+  S2.Add (T1.Get (0));
+  S3.Create (10);
+  S3.Add (T2.Get (0));
+  R2.Create (20);
+  R2.Add (T2.Get (0));
+
+  Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpDctcp"));
+  Config::SetDefault ("ns3::TcpSocket::SegmentSize", UintegerValue (1000));
+  Config::SetDefault ("ns3::TcpSocket::DelAckCount", UintegerValue (1));
+  GlobalValue::Bind ("ChecksumEnabled", BooleanValue (true));
+
+  //uint32_t meanPktSize = 1000;
+
+  //Config::SetDefault ("ns3::RedQueueDisc::Mode", StringValue ("QUEUE_DISC_MODE_PACKETS"));
+  //Config::SetDefault ("ns3::RedQueueDisc::MeanPktSize", UintegerValue (meanPktSize));
+
+  // DCTCP tracks instantaneous queue length only; so set QW = 1
+  Config::SetDefault ("ns3::RedQueueDisc::QW", DoubleValue (1));
+
+  // Triumph and Scorpion switches used in DCTCP Paper have 4 MB of buffer
+  // If every packet is 1000 bytes, 4195 packets can be stored in 4 MB
+  //Config::SetDefault ("ns3::RedQueueDisc::QueueLimit", UintegerValue (4195));
+        Config::SetDefault ("ns3::RedQueueDisc::MaxSize",
+                          QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, 4195)));
+
+  // MinTh = MaxTh = 17% of QueueLimit as recommended in ACM SIGCOMM 2010 DCTCP Paper
+  Config::SetDefault ("ns3::RedQueueDisc::MinTh", DoubleValue (7));
+  Config::SetDefault ("ns3::RedQueueDisc::MaxTh", DoubleValue (7));
+
+  // Setting ECN is mandatory for DCTCP
+  Config::SetDefault ("ns3::RedQueueDisc::UseEcn", BooleanValue (true));
+
+  PointToPointHelper pointToPointSR;
+  pointToPointSR.SetDeviceAttribute ("DataRate", StringValue ("10Mbps"));
+  pointToPointSR.SetChannelAttribute ("Delay", StringValue ("0.01ms"));
+
+  PointToPointHelper pointToPointT;
+  pointToPointT.SetDeviceAttribute ("DataRate", StringValue ("10Mbps"));
+  pointToPointT.SetChannelAttribute ("Delay", StringValue ("0.01ms"));
+
+  TrafficControlHelper tchRed;
+  tchRed.SetRootQueueDisc ("ns3::RedQueueDisc", "LinkBandwidth", StringValue ("100Mbps"),
+                           "LinkDelay", StringValue ("0.01ms"));
+
+  NetDeviceContainer S1dev, S2dev, S3dev, R1dev, R2dev, T1dev, T2dev;
+  R1dev = pointToPointSR.Install (R1);
+  T1dev = pointToPointT.Install (T1);
+  T2dev = pointToPointT.Install (T2);
+
+  T1dev.Get (0)->TraceConnectWithoutContext ("MacRx", MakeCallback (&PrintPayload));
+
+  for (uint32_t i = 0; i < 10; i++)
+    {
+      S1dev.Add (pointToPointSR.Install (S1.Get (i), T1.Get (0)));
+      S3dev.Add (pointToPointSR.Install (S3.Get (i), T2.Get (0)));
+      S2dev.Add (pointToPointSR.Install (S2.Get (i * 2), T1.Get (0)));
+      S2dev.Add (pointToPointSR.Install (S2.Get (2 * i + 1), T1.Get (0)));
+      R2dev.Add (pointToPointSR.Install (R2.Get (i * 2), T2.Get (0)));
+      R2dev.Add (pointToPointSR.Install (R2.Get (2 * i + 1), T2.Get (0)));
+    }
+
+  InternetStackHelper stack;
+  stack.Install (S2);
+  stack.Install (R2);
+  stack.Install (T1.Get (1));
+  stack.Install (R1.Get (0));
+
+  QueueDiscContainer queueDiscs1 = tchRed.Install (T1dev);
+  QueueDiscContainer queueDiscs2 = tchRed.Install (T2dev);
+
+  for (uint32_t i = 0; i < 10; i++)
+    {
+      stack.Install (S1.Get (i));
+      stack.Install (S3.Get (i));
+    }
+
+  Ipv4AddressHelper address;
+  Ipv4InterfaceContainer S1Int, S2Int, S3Int, R1Int, R2Int, T1Int, T2Int;
+
+  address.SetBase ("10.1.1.0", "255.255.255.0");
+  S1Int = address.Assign (S1dev);
+
+  address.SetBase ("10.1.2.0", "255.255.255.0");
+  S2Int = address.Assign (S2dev);
+
+  address.SetBase ("10.1.3.0", "255.255.255.0");
+  S3Int = address.Assign (S3dev);
+
+  address.SetBase ("10.2.1.0", "255.255.255.0");
+  R1Int = address.Assign (R1dev);
+
+  address.SetBase ("10.2.2.0", "255.255.255.0");
+  R2Int = address.Assign (R2dev);
+
+  address.SetBase ("10.3.1.0", "255.255.255.0");
+  T1Int = address.Assign (T1dev);
+
+  address.SetBase ("10.3.2.0", "255.255.255.0");
+  T2Int = address.Assign (T2dev);
+
+  Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+
+  uint16_t port = 50000;
+  Address sinkLocalAddress (InetSocketAddress (Ipv4Address::GetAny (), port));
+  PacketSinkHelper sinkHelper ("ns3::TcpSocketFactory", sinkLocalAddress);
+  ApplicationContainer sinkApp = sinkHelper.Install (R1.Get (0));
+  sinkApp.Start (Seconds (sink_start_time));
+  sinkApp.Stop (Seconds (sink_stop_time));
+
+  OnOffHelper clientHelper1 ("ns3::TcpSocketFactory", Address ());
+  clientHelper1.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
+  clientHelper1.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
+  clientHelper1.SetAttribute ("DataRate", DataRateValue (DataRate ("10Mb/s")));
+  clientHelper1.SetAttribute ("PacketSize", UintegerValue (1000));
+
+  ApplicationContainer clientApps1;
+  AddressValue remoteAddress (InetSocketAddress (R1Int.GetAddress (0), port));
+  clientHelper1.SetAttribute ("Remote", remoteAddress);
+  for (uint32_t i = 0; i < 10; i++)
+    {
+      clientApps1.Add (clientHelper1.Install (S1.Get (i)));
+      clientApps1.Add (clientHelper1.Install (S3.Get (i)));
+    }
+  clientApps1.Start (Seconds (client_start_time));
+  clientApps1.Stop (Seconds (client_stop_time));
+
+  for (uint32_t i = 0; i < 20; i++)
+    {
+      Address sinkLocalAddress2 (InetSocketAddress (Ipv4Address::GetAny (), port));
+      PacketSinkHelper sinkHelper2 ("ns3::TcpSocketFactory", sinkLocalAddress2);
+      ApplicationContainer sinkApp2 = sinkHelper.Install (R2.Get (i));
+      sinkApp2.Start (Seconds (sink_start_time));
+      sinkApp2.Stop (Seconds (sink_stop_time));
+
+      OnOffHelper clientHelper2 ("ns3::TcpSocketFactory", Address ());
+      clientHelper2.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
+      clientHelper2.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
+      clientHelper2.SetAttribute ("DataRate", DataRateValue (DataRate ("10Mb/s")));
+      clientHelper2.SetAttribute ("PacketSize", UintegerValue (1000));
+
+      ApplicationContainer clientApps2;
+      AddressValue remoteAddress2 (InetSocketAddress (R2Int.GetAddress (i), port));
+      clientHelper2.SetAttribute ("Remote", remoteAddress2);
+      clientApps2.Add (clientHelper2.Install (S2.Get (i)));
+      clientApps2.Start (Seconds (client_start_time));
+      clientApps2.Stop (Seconds (client_stop_time));
+    }
+
+  if (writePcap)
+    {
+      PointToPointHelper ptp;
+      std::stringstream stmp;
+      stmp << pathOut << "/dctcp-example";
+      ptp.EnablePcapAll (stmp.str ().c_str ());
+    }
+
+  if (writeForPlot)
+    {
+      filePlotQueue1 << pathOut << "/" << "dctcp-example-queue-1.plotme";
+      remove (filePlotQueue1.str ().c_str ());
+      Ptr<QueueDisc> queue1 = queueDiscs1.Get (0);
+      Simulator::ScheduleNow (&CheckQueueSize, queue1, filePlotQueue1.str ());
+
+      filePlotQueue2 << pathOut << "/" << "dctcp-example-queue-2.plotme";
+      remove (filePlotQueue2.str ().c_str ());
+      Ptr<QueueDisc> queue2 = queueDiscs2.Get (0);
+      Simulator::ScheduleNow (&CheckQueueSize, queue2, filePlotQueue2.str ());
+
+    }
+
+  Simulator::Stop (Seconds (sink_stop_time));
+  Simulator::Run ();
+
+
+  QueueDisc::Stats st = queueDiscs2.Get (0)->GetStats ();
+
+  // if (st.GetNDroppedPackets (PhantomQueueDisc::UNFORCED_DROP) == 0)
+  //   {
+  //     std::cout << "There should be some unforced drops" << std::endl;
+  //     exit (1);
+  //   }
+
+  if (st.GetNDroppedPackets (QueueDisc::INTERNAL_QUEUE_DROP) != 0)
+    {
+      std::cout << "There should be zero drops due to queue full" << std::endl;
+      exit (1);
+    }
+
+  std::cout << "*** Stats from the bottleneck queue disc ***" << std::endl;
+  std::cout << st << std::endl;
+  //	std::cout << "bottleNeckLinkBw : "<<LinkBandwidth<<std::endl;
+  std::cout << "Average Throughput : "<<(st.nTotalSentBytes/(10.0*1024*128))<<" Mbps"<<std::endl;
+  std::cout << "Destroying the simulation" << std::endl;
+
+  Simulator::Destroy ();
+
+
+  Simulator::Destroy ();
+  return 0;
+}

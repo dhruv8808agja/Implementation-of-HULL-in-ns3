@@ -33,6 +33,13 @@
 
 using namespace ns3;
 
+// static void
+// CwndChange (uint32_t oldCwnd, uint32_t newCwnd)
+// {
+//   NS_LOG_UNCOND (Simulator::Now ().GetSeconds () << "\t" << newCwnd);
+//   std::cout<<Simulator::Now ().GetSeconds () << "\t" << newCwnd<<std::endl;
+// }
+
 int main (int argc, char *argv[])
 {
   uint32_t    nLeaf = 6;
@@ -42,10 +49,10 @@ int main (int argc, char *argv[])
   // double      minTh = 5;
   // double      maxTh = 15;
   uint32_t    pktSize = 1200;
-  std::string appDataRate = "1000Mbps";
+  std::string appDataRate = "10Mbps";
   std::string queueDiscType = "RED";
   uint16_t port = 5001;
-  std::string bottleNeckLinkBw = "1000Mbps";
+  std::string bottleNeckLinkBw = "10Mbps";
   std::string bottleNeckLinkDelay = "6us";
 
   LogComponentEnable ("PhantomQueueDisc", LOG_LEVEL_INFO);
@@ -89,14 +96,16 @@ int main (int argc, char *argv[])
     }
 
 //Setting TCPDctcp
-  // TypeId tcpTid;
-  // NS_ABORT_MSG_UNLESS (TypeId::LookupByNameFailSafe ("ns3::TcpDctcp", &tcpTid), "TypeId " << "ns3::TcpDctcp" << " not found");
-  // Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpDctcp"));
+  TypeId tcpTid;
+  NS_ABORT_MSG_UNLESS (TypeId::LookupByNameFailSafe ("ns3::TcpDctcp", &tcpTid), "TypeId " << "ns3::TcpVegas" << " not found");
+  Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpVegas"));
 //Setting TCPDctcp over  
   Config::SetDefault ("ns3::PhantomQueueDisc::LinkBandwidth", StringValue (bottleNeckLinkBw));
   Config::SetDefault ("ns3::PhantomQueueDisc::LinkDelay", StringValue (bottleNeckLinkDelay));
-  Config::SetDefault ("ns3::PhantomQueueDisc::DrainRateFraction", DoubleValue(0.95));
+  Config::SetDefault ("ns3::PhantomQueueDisc::DrainRateFraction", DoubleValue(0.90));
   Config::SetDefault ("ns3::PhantomQueueDisc::MarkingthreShold", DoubleValue(6000));
+
+
 
   // Create the point-to-point link helpers
   PointToPointHelper bottleNeckLink;
@@ -104,7 +113,7 @@ int main (int argc, char *argv[])
   bottleNeckLink.SetChannelAttribute ("Delay", StringValue (bottleNeckLinkDelay));
 
   PointToPointHelper pointToPointLeaf;
-  pointToPointLeaf.SetDeviceAttribute    ("DataRate", StringValue ("1000Mbps"));
+  pointToPointLeaf.SetDeviceAttribute    ("DataRate", StringValue ("10Mbps"));
   pointToPointLeaf.SetChannelAttribute   ("Delay", StringValue ("6us"));
 
   PointToPointDumbbellHelper d (nLeaf, pointToPointLeaf,
@@ -127,8 +136,8 @@ int main (int argc, char *argv[])
   TrafficControlHelper tchBottleneck;
   QueueDiscContainer queueDiscs;
   tchBottleneck.SetRootQueueDisc ("ns3::PhantomQueueDisc");
-  tchBottleneck.Install (d.GetLeft ()->GetDevice (0));
-  queueDiscs = tchBottleneck.Install (d.GetRight ()->GetDevice (0));
+  //tchBottleneck.Install (d.GetLeft ()->GetDevice (0));
+  queueDiscs = tchBottleneck.Install (d.GetRight ()->GetDevice (0));  
 
   // Assign IP Addresses
   d.AssignIpv4Addresses (Ipv4AddressHelper ("10.1.1.0", "255.255.255.0"),
@@ -151,6 +160,8 @@ int main (int argc, char *argv[])
   sinkApps.Start (Seconds (0.0));
   sinkApps.Stop (Seconds (12.0));
 
+
+
   ApplicationContainer clientApps;
   for (uint32_t i = 0; i < d.RightCount (); ++i)
     {
@@ -159,6 +170,17 @@ int main (int argc, char *argv[])
       clientHelper.SetAttribute ("Remote", remoteAddress);
       clientApps.Add (clientHelper.Install (d.GetRight (i)));
     }
+    //>>>>>>>>>>>>>>>>>>>>>
+  // Ptr<Socket> ns3TcpSocket = Socket::CreateSocket (d.GetRight (1), TcpSocketFactory::GetTypeId ());
+  // ns3TcpSocket->TraceConnectWithoutContext ("CongestionWindow", MakeCallback (&CwndChange));
+
+  // Ptr<BulkSendApplication> app = CreateObject<BulkSendApplication> ();
+  // app->Setup (ns3TcpSocket, InetSocketAddress (d.GetLeftIpv4Address (1), port), 1040, 1000, DataRate ("10Mbps"));
+  
+  // d.GetRight (1)->AddApplication (app);
+  // app->SetStartTime (Seconds (1.));
+  // app->SetStopTime (Seconds (11.));
+  //>>>>>>>>>>>>>>>>>>>>>>>>
   clientApps.Start (Seconds (1.0)); // Start 1 second after sink
   clientApps.Stop (Seconds (11.0)); // Stop before the sink
 
